@@ -1,0 +1,36 @@
+import nltk
+from google.appengine.api import users
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp.util import run_wsgi_app
+
+class ChatbotHandler(webapp.RequestHandler):
+  def post(self):
+    # Get message from request
+    message = self.request.get("message")
+
+    # Process and analyze message using NLTK
+    words = nltk.word_tokenize(message)
+    stop_words = nltk.corpus.stopwords.words("english")
+    words = [word for word in words if word not in stop_words]
+    stemmer = nltk.stem.PorterStemmer()
+    words = [stemmer.stem(word) for word in words]
+
+    # Generate response
+    if "help" in words:
+      response = "How can I help you?"
+    elif "question" in words:
+      response = "What do you want to know?"
+    else:
+      response = "I'm here to answer your questions."
+
+    # Return response as JSON
+    self.response.headers["Content-Type"] = "application/json"
+    self.response.out.write(json.dumps({ "response": response }))
+
+application = webapp.WSGIApplication([("/chatbot", ChatbotHandler)])
+
+def main():
+  run_wsgi_app(application)
+
+if __name__ == "__main__":
+  main()
